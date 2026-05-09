@@ -1,0 +1,28 @@
+# arch/Kconfig
+
+config ARCH_ARM
+    bool
+    help
+      ARM 32-bit Architecture
+
+config ARCH_ARM64
+    bool
+    help
+      ARM 64-bit Architecture (AArch64)
+
+config ARCH_RISCV
+    bool
+    help
+      RISC-V Architecture
+
+config ARCH_NAME
+    string
+    default "riscv" if ARCH_RISCV
+    default "arm64" if ARCH_ARM64
+    default "arm" if ARCH_ARM
+
+config CROSS_COMPILE
+    string
+    default "riscv64-unknown-elf-" if ARCH_RISCV
+    default "aarch64-linux-gnu-" if ARCH_ARM64
+    default "arm-none-eabi-" if ARCH_ARM

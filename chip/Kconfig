@@ -1,0 +1,24 @@
+# chip/Kconfig
+
+config CHIP_QEMU_VIRT_ARM32
+    bool
+    select ARCH_ARM
+
+config CHIP_QEMU_VIRT_ARM64
+    bool
+    select ARCH_ARM64
+
+config CHIP_QEMU_VIRT_RV32
+    bool
+    select ARCH_RISCV
+
+config CHIP_QEMU_VIRT_RV64
+    bool
+    select ARCH_RISCV
+
+config 64BIT
+    bool
+    default y if CHIP_QEMU_VIRT_RV64 || CHIP_QEMU_VIRT_ARM64
+    default n
+
+

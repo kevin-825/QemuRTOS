@@ -1,0 +1,25 @@
+# boards/Kconfig
+
+choice
+    prompt "Select Target Board"
+    default BOARD_QEMU_VIRT_RV64
+
+config BOARD_QEMU_VIRT_ARM32
+    bool "QEMU ARM 32-bit Virt Board"
+    select CHIP_QEMU_VIRT_ARM32
+    help
+
+config BOARD_QEMU_VIRT_ARM64
+    bool "QEMU ARM 64-bit Virt Board"
+    select CHIP_QEMU_VIRT_ARM64 
+    help
+
+config BOARD_QEMU_VIRT_RV32
+    bool "QEMU RISC-V 32-bit Virt Board"
+    select CHIP_QEMU_VIRT_RV32
+
+config BOARD_QEMU_VIRT_RV64
+    bool "QEMU RISC-V 64-bit Virt Board"
+    select CHIP_QEMU_VIRT_RV64
+
+endchoice
