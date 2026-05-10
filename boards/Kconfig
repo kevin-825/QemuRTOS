@@ -4,14 +4,14 @@ choice
     prompt "Select Target Board"
     default BOARD_QEMU_VIRT_RV64
 
-config BOARD_QEMU_VIRT_ARM32
+config BOARD_QEMU_VIRT_ARM
     bool "QEMU ARM 32-bit Virt Board"
-    select CHIP_QEMU_VIRT_ARM32
+    select CHIP_QEMU_VIRT_ARM
     help
 
-config BOARD_QEMU_VIRT_ARM64
+config BOARD_QEMU_VIRT_AARCH64
     bool "QEMU ARM 64-bit Virt Board"
-    select CHIP_QEMU_VIRT_ARM64 
+    select CHIP_QEMU_VIRT_AARCH64
     help
 
 config BOARD_QEMU_VIRT_RV32
@@ -28,8 +28,8 @@ config BOARD_DIR
     string
     default "riscv/qemu_virt_rv64" if BOARD_QEMU_VIRT_RV64
     default "riscv/qemu_virt_rv32" if BOARD_QEMU_VIRT_RV32
-    default "arm/qemu_virt_a72" if BOARD_QEMU_VIRT_ARM64
-    default "arm/qemu_virt_a15" if BOARD_QEMU_VIRT_ARM32
+    default "arm/virt_aarch64" if BOARD_QEMU_VIRT_AARCH64
+    default "arm/virt_arm" if BOARD_QEMU_VIRT_ARM
 
 
 
@@ -70,5 +70,5 @@ config QEMU_RUN_CMD_PREFIX
       -serial chardev:con -mon chardev=con,mode=readline -bios none -smp 4 " \
     if BOARD_QEMU_VIRT_RV32
 
-    default "" if BOARD_QEMU_VIRT_ARM64
-    default "" if BOARD_QEMU_VIRT_ARM32
+    default "" if BOARD_QEMU_VIRT_AARCH64
+    default "" if BOARD_QEMU_VIRT_ARM
