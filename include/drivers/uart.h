@@ -9,7 +9,7 @@ struct uart_driver_api {
     /* Polling API */
     void (*poll_out)(const struct device *dev, unsigned char out_char);
     int  (*poll_in)(const struct device *dev, unsigned char *p_char);
-    void (*put_char)(const struct device *dev, char c);
+    void (*put_char)(const struct device *dev, unsigned char c);
     char (*get_char)(const struct device *dev);
 
     /* We can add Interrupt API here later when we write the RISC-V Trap handler! */

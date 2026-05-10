@@ -18,7 +18,7 @@ config CHIP_QEMU_VIRT_RV64
 
 config 64BIT
     bool
-    default y if CHIP_QEMU_VIRT_RV64 || CHIP_QEMU_VIRT_ARM64
+    default y if CHIP_QEMU_VIRT_RV64 || CHIP_QEMU_VIRT_AARCH64
     default n
 
 # chip/Kconfig (at the bottom)

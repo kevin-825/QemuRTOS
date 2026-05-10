@@ -5,7 +5,5 @@ mainmenu "QemuRTOS Configuration"
 source "boards/Kconfig"
 source "chip/Kconfig"
 source "arch/Kconfig"
-
-# We will source these later as we build them
-# source "kernel/Kconfig"
-# source "drivers/Kconfig"
+source "kernel/Kconfig"
+source "drivers/Kconfig"

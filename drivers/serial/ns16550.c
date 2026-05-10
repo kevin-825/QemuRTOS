@@ -68,10 +68,8 @@ int ns16550_init(const struct device *dev, void *dtb, int dt_node) {
     if (!prop) {
         return -1; /* Failed: No IRQ found! */
     }
-    uint32_t interrupt_type = fdt32_to_cpu(prop[0]);
-    uint32_t interrupt_num = fdt32_to_cpu(prop[1]);
-    uint32_t interrupt_flags = fdt32_to_cpu(prop[2]);
-    data->irq = fdt32_to_cpu(prop[0]);
+    uint32_t interrupt_num = fdt32_to_cpu(prop[0]);
+    data->irq = interrupt_num;
 
 
     /* --- 3. ACTUALLY INITIALIZE THE HARDWARE --- */
@@ -91,7 +89,7 @@ int ns16550_init(const struct device *dev, void *dtb, int dt_node) {
 }
 
 /* The API implementation for writing a character */
-static void ns16550_put_char(const struct device *dev, char c) {
+static void ns16550_put_char(const struct device *dev, unsigned char c) {
     /* 1. Retrieve the saved data from the device struct */
     struct ns16550_data *data = (struct ns16550_data *)dev->data;
     

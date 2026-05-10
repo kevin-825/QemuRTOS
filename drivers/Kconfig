@@ -1,0 +1,8 @@
+
+menu "Device Drivers"
+
+# Source the serial drivers menu
+source "drivers/serial/Kconfig"
+
+
+endmenu

@@ -1,0 +1,19 @@
+menu "Serial Drivers"
+
+config SERIAL_NS16550
+    bool "NS16550 UART driver"
+    default y if ARCH_RISCV
+    help
+      Enable the driver for the NS16550 UART.
+      This is the standard serial controller used by the QEMU RISC-V 
+      'virt' machine and many PC-like architectures.
+
+config SERIAL_PL011
+    bool "ARM PrimeCell PL011 UART driver"
+    default y if ARCH_AARCH64 || ARCH_ARM
+    help
+      Enable the driver for the ARM PL011 UART.
+      This is the standard serial controller used by the QEMU AArch64 
+      'virt' machine and Raspberry Pi boards.
+
+endmenu
