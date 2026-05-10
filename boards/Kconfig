@@ -23,3 +23,52 @@ config BOARD_QEMU_VIRT_RV64
     select CHIP_QEMU_VIRT_RV64
 
 endchoice
+
+config BOARD_DIR
+    string
+    default "riscv/qemu_virt_rv64" if BOARD_QEMU_VIRT_RV64
+    default "riscv/qemu_virt_rv32" if BOARD_QEMU_VIRT_RV32
+    default "arm/qemu_virt_a72" if BOARD_QEMU_VIRT_ARM64
+    default "arm/qemu_virt_a15" if BOARD_QEMU_VIRT_ARM32
+
+
+
+menu "Device Tree Architecture"
+
+choice
+    prompt "Device Tree Parsing Strategy"
+    default DTB_DYNAMIC
+
+config DTB_DYNAMIC
+    bool "Dynamic Runtime Parsing (Linux-style libfdt)"
+    help
+      Embeds libfdt. The OS will parse the binary .dtb in RAM during 
+      early boot. Best for flexibility and learning Linux internals.
+
+config DTB_STATIC
+    bool "Static Compile-Time Macros (Zephyr-style)"
+    help
+      Relies on hardcoded C macros defined at compile time. 
+      Zero runtime RAM/CPU overhead. Best for tiny microcontrollers.
+
+endchoice
+
+endmenu
+
+# ... (The rest of your board configs remain here)
+
+
+
+config QEMU_RUN_CMD_PREFIX
+    string
+    default "qemu-system-riscv64 -nographic -machine virt -net none -chardev stdio,id=con,mux=on \
+      -serial chardev:con -mon chardev=con,mode=readline -bios none -smp 4 \
+      -cpu rv64,zba=true,zbb=true,v=true,vlen=256,vext_spec=v1.0,rvv_ta_all_1s=true,rvv_ma_all_1s=true" \
+    if BOARD_QEMU_VIRT_RV64
+
+    default "qemu-system-riscv32 -nographic -machine virt -net none -chardev stdio,id=con,mux=on \
+      -serial chardev:con -mon chardev=con,mode=readline -bios none -smp 4 " \
+    if BOARD_QEMU_VIRT_RV32
+
+    default "" if BOARD_QEMU_VIRT_ARM64
+    default "" if BOARD_QEMU_VIRT_ARM32

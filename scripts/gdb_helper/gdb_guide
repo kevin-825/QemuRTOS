@@ -1,0 +1,18 @@
+Command,Shortcut,Description
+layout src,,Standard Source view.
+layout asm,,Disassembly view.
+layout split,,Source + Disassembly (Best for low-level C).
+layout regs,,Adds the Register window to the current layout.
+focus <win>,fs <win>,"Switch focus (src, asm, regs, cmd) to scroll with arrows."
+tui reg general,,Show standard integer registers.
+tui reg float,,Show floating-point registers.
+refresh,Ctrl+L,Fixes the screen if the layout gets garbled.
+tui disable,Ctrl+X A,Toggle back to classic CLI mode.
+
+
+
+
+
+
+
+

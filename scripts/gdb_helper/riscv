@@ -1,0 +1,113 @@
+# ==============================================================================
+# RISC-V Sv39 PAGE TABLE WALKER (Python Implementation)
+# ==============================================================================
+python
+import gdb
+import re
+
+class WalkPageTable(gdb.Command):
+    """
+    Walks the RISC-V Sv39 Page Table for a given Virtual Address.
+    Usage: pt_walk <virtual_address>
+    Example: pt_walk 0xffffffe000123456
+    """
+    
+    def __init__(self):
+        super(WalkPageTable, self).__init__("pt_walk", gdb.COMMAND_USER)
+
+    def invoke(self, arg, from_tty):
+        if not arg:
+            print("Error: Please provide a virtual address. (e.g., pt_walk $stval)")
+            return
+            
+        try:
+            # Evaluate the argument (can be a hex string or a register like $stval)
+            va = int(gdb.parse_and_eval(arg))
+            satp = int(gdb.parse_and_eval("$satp"))
+        except gdb.error:
+            print("Error: Could not parse address or read $satp.")
+            return
+
+        # 1. Decode SATP (MODE and PPN)
+        mode = (satp >> 60) & 0xF
+        if mode != 8:
+            print("Error: This script supports Sv39 MMU (Mode 8). Current Mode: {}".format(mode))
+            if mode == 0: print("Note: MMU is currently OFF (Bare mode).")
+            return
+
+        root_ppn = satp & 0xFFFFFFFFFFF
+        root_pa = root_ppn << 12
+
+        print("\n--- RISC-V Sv39 Page Table Walk ---")
+        print("Target Virtual Address : 0x{:016x}".format(va))
+        print("Root Page Table (SATP): 0x{:016x}".format(root_pa))
+
+        # Extract the 3 Virtual Page Numbers (VPN)
+        vpns = [
+            (va >> 12) & 0x1FF,  # Level 0 (Leaf)
+            (va >> 21) & 0x1FF,  # Level 1 (2MB Superpage)
+            (va >> 30) & 0x1FF   # Level 2 (1GB Superpage)
+        ]
+
+        # 2. Walk the Tree
+        curr_pa = root_pa
+        for level in (2, 1, 0):
+            # Calculate the physical address of the specific Page Table Entry (PTE)
+            pte_pa = curr_pa + (vpns[level] * 8)
+            
+            # USE QEMU BACKDOOR: Read 1 Giant word (8 bytes) of Physical memory
+            monitor_cmd = "monitor xp /1gx 0x{:x}".format(pte_pa)
+            try:
+                out = gdb.execute(monitor_cmd, to_string=True)
+                # Parse QEMU output: "0000000080001000: 00000000200000c1"
+                match = re.search(r':\s+([0-9a-fA-F]+)', out)
+                if not match: raise ValueError
+                pte = int(match.group(1), 16)
+            except:
+                print("Error: QEMU physical memory read failed at 0x{:016x}".format(pte_pa))
+                return
+
+            # Extract PTE Flags
+            flags = pte & 0xFF
+            v = flags & 1
+            r = (flags >> 1) & 1
+            w = (flags >> 2) & 1
+            x = (flags >> 3) & 1
+            u = (flags >> 4) & 1
+
+            print("\nLevel {} (VPN 0x{:03x}):".format(level, vpns[level]))
+            print("  PTE Location : 0x{:016x}".format(pte_pa))
+            print("  PTE Value    : 0x{:016x}".format(pte))
+
+            # 3. Analyze the Entry
+            if not v:
+                print("  -> RESULT: INVALID ENTRY (PAGE FAULT!)")
+                print("  -> The OS has not mapped this memory, or it was swapped out.")
+                return
+
+            if r or w or x:
+                # If any of Read/Write/Execute are set, this is a LEAF node (we found the memory)
+                target_ppn = (pte >> 10) & 0xFFFFFFFFFFF
+                
+                # Calculate final physical address based on page size
+                if level == 2:
+                    final_pa = (target_ppn << 12) + (va & 0x3FFFFFFF)
+                    page_size = "1GB Superpage"
+                elif level == 1:
+                    final_pa = (target_ppn << 12) + (va & 0x1FFFFF)
+                    page_size = "2MB Superpage"
+                else:
+                    final_pa = (target_ppn << 12) + (va & 0xFFF)
+                    page_size = "4KB Page"
+
+                print("  -> RESULT: VALID LEAF ({})".format(page_size))
+                print("  -> Permissions : R:{} W:{} X:{} U:{} (User)".format(r, w, x, u))
+                print("  -> Physical Addr: 0x{:016x}".format(final_pa))
+                return
+            else:
+                # All permissions are 0, which means this is a pointer to the next table level
+                curr_pa = ((pte >> 10) & 0xFFFFFFFFFFF) << 12
+                print("  -> Pointer to Level {} Table at 0x{:016x}".format(level - 1, curr_pa))
+
+WalkPageTable()
+end

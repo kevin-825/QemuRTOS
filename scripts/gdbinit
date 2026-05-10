@@ -1,0 +1,74 @@
+source ./scripts/auto_gdbinit
+
+eval "file %s", $DEBUG_TARGET_VMLINUX
+printf "\n>>> DEBUG_TARGET_VMLINUX:%s\n\n",$DEBUG_TARGET_VMLINUX
+#eval "add-symbol-file %s", $DEBUG_TARGET_VMLINUX
+
+source ./scripts/gdb_helper/global_setup.gdb
+
+printf "\n>>> Target Architecture: %s \n", $build_ARCH
+
+
+
+# 1.Low-Level Debug Settings
+set remotetimeout 60
+#set step-mode on
+
+# 2.Kernel-Level Debug Settings
+set schedule-multiple off
+#set print thread-events off
+#set max-value-size unlimited
+
+
+# 3.User-Level Debug Settings
+#handle SIG32 nostop noprint pass
+#set follow-fork-mode child
+#set follow-fork-mode parent
+# Custom shared lib path (if needed)
+#set solib-search-path <path_to_libs>
+
+
+#show GDB config vars
+show sysroot
+show architecture
+show pagination
+
+################################
+# Breakpoint & and debug setup
+################################
+
+
+define cnnt
+    echo \n ====== Connecting to QEMU on localhost:1234 ======\n
+    target remote localhost:1234
+    info connections
+    echo \n =============== Connected ========================\n
+end
+
+define cnnt-ext
+    echo \n ====== Connecting to QEMU on localhost:1234 ======\n
+    target extended-remote localhost:1234
+    info connections
+    echo \n =============== Connected ========================\n
+    #set remote exec-file /usr/bin/my_custom_app
+end
+
+define bkpt
+    echo \n-------------------------------\n
+    #thbreak _start
+    thbreak main
+    break device_init_all
+    break device.c:33
+    echo \n-------------------------------\n
+end
+
+printf "archsize%s_%s-stop-hook  added to hook-stop", $build_ARCH_SIZE, $build_ARCH
+
+define hook-stop
+    eval "archsize%s_%s-stop-hook", $build_ARCH_SIZE, $build_ARCH
+end
+
+#Do the connection and do setup breakpoint here
+#cnnt
+cnnt-ext
+bkpt

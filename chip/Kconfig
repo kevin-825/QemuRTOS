@@ -21,4 +21,12 @@ config 64BIT
     default y if CHIP_QEMU_VIRT_RV64 || CHIP_QEMU_VIRT_ARM64
     default n
 
+# chip/Kconfig (at the bottom)
+
+config CHIP_DIR
+    string
+    default "qemu/virt_riscv64" if CHIP_QEMU_VIRT_RV64
+    default "qemu/virt_riscv32" if CHIP_QEMU_VIRT_RV32
+    default "qemu/virt_arm64" if CHIP_QEMU_VIRT_ARM64
+    default "qemu/virt_arm32" if CHIP_QEMU_VIRT_ARM32
 
