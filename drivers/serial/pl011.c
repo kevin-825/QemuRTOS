@@ -1,6 +1,6 @@
 /* drivers/serial/pl011.c */
-#include "device.h"
-#include "uart.h"
+#include "kernel/device.h"
+#include "drivers/uart.h"
 #include <libfdt.h>
 
 struct pl011_data {
