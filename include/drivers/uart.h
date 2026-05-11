@@ -2,7 +2,7 @@
 #ifndef QEMURTOS_UART_H
 #define QEMURTOS_UART_H
 
-#include "device.h"
+#include "kernel/device.h"
 
 /* 1. The Condensed API Struct */
 struct uart_driver_api {

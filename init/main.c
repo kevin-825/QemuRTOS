@@ -1,5 +1,5 @@
 /* kernel/init.c */
-#include "device.h"
+#include "kernel/device.h"
 #include "kernel/printk.h"
 extern unsigned int g_dtb_ptr;
 void main(void) {

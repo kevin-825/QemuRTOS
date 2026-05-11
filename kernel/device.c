@@ -1,4 +1,6 @@
-#include "device.h"
+//device.c - Core device management for QemuRTOS
+
+#include "kernel/device.h"
 #include <string.h>
 #include <stddef.h>
 #include <libfdt.h>  /* Added for Auto-Probing */

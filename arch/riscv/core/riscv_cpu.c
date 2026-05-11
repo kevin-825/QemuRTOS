@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include "encoding.h"
 #include "riscv_cpu.h"
-#include "printk.h"
+#include "kernel/printk.h"
 
 uintptr_t riscv_cpu_myhart_id(void) {
     uintptr_t myhart;

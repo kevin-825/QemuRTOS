@@ -1,4 +1,4 @@
-
+BOARD_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
 
 QEMU_RUN_CMD_PREFIX := \
 qemu-system-aarch64 -M virt,virtualization=on,secure=on \

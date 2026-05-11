@@ -94,12 +94,13 @@ $(TARGET): $(OBJS)
 	@echo "======================================="
 	$(CC) $(OBJS) $(LDFLAGS) -o $(TARGET_DIR)/qemurtos.elf
 	$(SIZE) $(TARGET_DIR)/qemurtos.elf
+	$(OBJCPY) -O binary $(TARGET_DIR)/qemurtos.elf $(TARGET_DIR)/qemurtos.bin   # <--- ADD THIS
 	@echo "======================================="
 	@echo " [SUCCESS] Build complete! Output at $(TARGET_DIR)/qemurtos.elf"
 	@sh -c '$(OBJDUMP) -d -S $(TARGET_DIR)/qemurtos.elf > $(TARGET_DIR)/qemurtos.elf.s'
 	@echo "======================================="
 	./scripts/auto_gdbinit.sh $(PROJECT_ROOT) $(TARGET_DIR) $(CROSS_COMPILE) $(TARGET) $(ARCH) $(ARCH_SIZE) $(BOARD_DIR)
-	eval "$(QEMU_RUN_CMD_PREFIX) --kernel $(TARGET) -s"
+#	eval "$(QEMU_RUN_CMD_PREFIX) --kernel $(TARGET) -s"
 
 
 # Build rules
@@ -121,10 +122,10 @@ clean:
 	rm -f *.elf *.o
 	rm -rf $(TARGET_DIR)
 
-qemu-run:
-	eval "$(QEMU_RUN_CMD_PREFIX) --kernel $(TARGET) -s"
-qemu-dbg:
-	eval "$(QEMU_RUN_CMD_PREFIX) --kernel $(TARGET) -s -S"
+qemu-run: clean all
+	eval "$(QEMU_RUN_CMD_PREFIX) --kernel $(TARGET_DIR)/qemurtos.bin -s"
+qemu-dbg: clean all
+	eval "$(QEMU_RUN_CMD_PREFIX) --kernel $(TARGET_DIR)/qemurtos.bin -s -S"
 
 debug:
 	./scripts/auto_gdbinit.sh $(PROJECT_ROOT) $(TARGET_DIR) $(CROSS_COMPILE) $(TARGET) $(ARCH) $(ARCH_SIZE) $(BOARD_DIR)

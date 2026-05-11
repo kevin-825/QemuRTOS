@@ -1,5 +1,5 @@
 /* drivers/serial/ns16550.c */
-#include "device.h"
+#include "kernel/device.h"
 #include "drivers/uart.h"
 #include <libfdt.h>
 

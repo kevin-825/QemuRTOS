@@ -18,8 +18,12 @@ __1GB__   = 0x40000000;
 /* Define the memory regions */
 MEMORY
 {
-    /* QEMU virt AArch64 RAM starts at 0x40000000 */
-    RAM (rwx) : ORIGIN = 0x40000000, LENGTH = 128M
+    /* QEMU virt AArch64 RAM physically starts at 0x40000000. 
+     * However, the Linux boot protocol reserves the first 512KB (0x80000) 
+     * for the Boot ROM and Device Tree Blob (DTB). 
+     * Therefore, our usable OS memory starts at 0x40080000. 
+     */
+    RAM (rwx) : ORIGIN = 0x40080000, LENGTH = 128M - 0x80000
 }
 
 __heap_size = 4M;

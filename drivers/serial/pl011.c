@@ -100,4 +100,4 @@ static struct pl011_data uart0_data = {
 static struct device_state uart0_state = { .init_state = DEVICE_STATE_UNINIT };
 
 /* THE ZEPHYR MAGIC */
-DEVICE_DEFINE(uart0_pl011, "arm,pl011", pl011_init, NULL, &uart0_data, &uart0_state, &pl011_api, POST_KERNEL);
+DEVICE_DEFINE(uart0, "arm,pl011", pl011_init, NULL, &uart0_data, &uart0_state, &pl011_api, POST_KERNEL);

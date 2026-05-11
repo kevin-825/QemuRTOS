@@ -5,7 +5,7 @@
 #include "exception.h"
 #include "riscv_cpu.h"
 #include "encoding.h"
-#include "printk.h"
+#include "kernel/printk.h"
 
 #define METAL_MCAUSE_INTR 0x80000000UL
 #define METAL_MCAUSE_CAUSE 0x000003FFUL

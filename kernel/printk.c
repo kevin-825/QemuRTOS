@@ -1,6 +1,6 @@
 /* kernel/printk.c */
 #include "kernel/printk.h"
-#include "device.h"
+#include "kernel/device.h"
 #include "drivers/uart.h"
 #include <stdarg.h>
 
@@ -8,7 +8,7 @@
 #define NULL ((void *)0)
 
 /* Store the console device pointer globally so we don't have to look it up every time */
-static const struct device *console_dev = NULL;
+static const struct device *console_dev;
 
 void console_init(void) {
     /* Grab the UART from the Device Subsystem we just built! */

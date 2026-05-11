@@ -4,7 +4,7 @@
 #include "exception.h"
 #include "riscv_cpu.h"
 #include "encoding.h"
-#include "printk.h"
+#include "kernel/printk.h"
 #define MAX_ECALL_NUM 128
 //#include "coredump.h"
 
