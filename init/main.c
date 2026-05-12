@@ -1,7 +1,14 @@
 /* kernel/init.c */
 #include "kernel/device.h"
 #include "kernel/printk.h"
+#include "kernel/mm/simple_mm.h"
+#include "test.h"
+
 extern unsigned int g_dtb_ptr;
+
+extern uint8_t _heap[];
+extern uint8_t _eheap[];
+
 void main(void) {
     device_init_all((void*)g_dtb_ptr);
     console_init();
@@ -11,6 +18,7 @@ void main(void) {
     pr_info("======================================\n");
 
     pr_debug("Initializing memory manager...\n"); /* This is hidden by default! */
+    simple_init(_heap, _eheap - _heap);
     
     int cpu_id = 0;
     pr_info("CPU Hart ID: %d\n", cpu_id);
@@ -22,7 +30,7 @@ void main(void) {
     }
 
     pr_info("System Ready.\n");
-
+    test_simple_mm();
     while (1) {
         asm volatile("wfi");
     }

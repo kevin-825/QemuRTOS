@@ -1,0 +1,32 @@
+menu "Memory Management Configuration"
+
+choice 
+    prompt "Select Memory Management Strategy"
+    default MM_SIMPLE
+
+config MM_SIMPLE
+    bool "Simple First-Fit Memory Allocator"
+    help
+      A simple memory allocator that uses a first-fit strategy. 
+      It maintains a linked list of free blocks and splits them as needed.
+      This allocator is easy to implement but may lead to fragmentation over time.
+
+
+endchoice
+
+
+
+choice 
+    prompt "Enable Memory Management Debugging"
+    default MM_DEBUG
+
+config MM_DEBUG
+    bool "Enable Debugging for Memory Management"
+    depends on MM_SIMPLE
+    help
+      Enable additional debugging output for the simple memory allocator. 
+      This can help identify issues with memory allocation and deallocation, 
+      but may reduce performance due to increased logging.
+endchoice
+
+endmenu

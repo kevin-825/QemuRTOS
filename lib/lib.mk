@@ -19,8 +19,10 @@ ifeq ($(CONFIG_DTB_DYNAMIC),y)
 
 endif
 
-CFLAGS += -Ilib/string
+CFLAGS += -Ilib
 
 libdir := $(dir $(lastword $(MAKEFILE_LIST)))
 
 SRCS += $(wildcard $(libdir)string/*.c)
+
+include lib/mylib/mylib.mk

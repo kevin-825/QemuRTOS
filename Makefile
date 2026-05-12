@@ -53,6 +53,7 @@ ifeq ($(filter $(NON_BUILD_TARGETS),$(MAKECMDGOALS)),)
     include drivers/drivers.mk
     include subsys/subsys.mk
     include lib/lib.mk
+    include mm/mm.mk
     include include/include.mk    
     OBJS := $(SRCS:.c=.o)
     OBJS := $(OBJS:.S=.o)
