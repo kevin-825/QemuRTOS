@@ -30,7 +30,11 @@ void main(void) {
     }
 
     pr_info("System Ready.\n");
-    test_simple_mm();
+
+    run_mm_tests();
+
+    run_printk_tests();
+
     while (1) {
         asm volatile("wfi");
     }

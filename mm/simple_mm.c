@@ -11,7 +11,8 @@ struct list_node free_mem_list_head;
 
 void print_mm_blk(struct simple_mm_block *block)
 {
-    printk("@%p:  size=%zu, flags=0x%8x magic=0x08%x\n", block, EXTRACT_SIZE(block->size_flag), EXTRACT_FLAG(block->size_flag), block->magic);
+    printk(" mem block at=0x%zx  size=0x%zx, flags=0x%04x magic=0x%08x\n",\
+         (size_t)block, EXTRACT_SIZE(block->size_flag), EXTRACT_FLAG(block->size_flag), block->magic);
 }
 
 static inline size_t align_requested_size(size_t size)

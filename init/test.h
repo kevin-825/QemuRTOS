@@ -5,9 +5,9 @@
 
 
 
-void test_simple_mm(void);
+void run_mm_tests(void);
 
-
+void run_printk_tests(void);
 
 
 
