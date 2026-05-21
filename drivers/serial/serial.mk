@@ -1,11 +1,6 @@
-# drivers/serial/serial.mk
 
-drv_path := $(dir $(lastword $(MAKEFILE_LIST)))
+# Only compile ns16550.o if CONFIG_SERIAL_NS16550 is 'y'
+obj-$(CONFIG_SERIAL_NS16550) += drivers/serial/ns16550.o
 
-ifeq ($(CONFIG_SERIAL_NS16550),y)
-    SRCS += $(drv_path)ns16550.c
-endif
-
-ifeq ($(CONFIG_SERIAL_PL011),y)
-    SRCS += $(drv_path)pl011.c
-endif
+# Only compile pl011.o if CONFIG_SERIAL_PL011 is 'y'
+obj-$(CONFIG_SERIAL_PL011) += drivers/serial/pl011.o

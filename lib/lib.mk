@@ -7,22 +7,18 @@ ifeq ($(CONFIG_DTB_DYNAMIC),y)
     CFLAGS += -Ilib/libfdt
 
     # 2. Add the libfdt source files to the build
-    SRCS += lib/libfdt/fdt.c
-    SRCS += lib/libfdt/fdt_ro.c
-    SRCS += lib/libfdt/fdt_wip.c
-    SRCS += lib/libfdt/fdt_sw.c
-    SRCS += lib/libfdt/fdt_rw.c
-    SRCS += lib/libfdt/fdt_strerror.c
-    SRCS += lib/libfdt/fdt_empty_tree.c
-    SRCS += lib/libfdt/fdt_addresses.c
-    SRCS += lib/libfdt/fdt_overlay.c
+    obj-y += lib/libfdt/fdt.o
+    obj-y += lib/libfdt/fdt_ro.o
+    obj-y += lib/libfdt/fdt_wip.o
+    obj-y += lib/libfdt/fdt_sw.o
+    obj-y += lib/libfdt/fdt_rw.o
+    obj-y += lib/libfdt/fdt_strerror.o
+    obj-y += lib/libfdt/fdt_empty_tree.o
+    obj-y += lib/libfdt/fdt_addresses.o
+    obj-y += lib/libfdt/fdt_overlay.o
 
 endif
 
 CFLAGS += -Ilib
-
-libdir := $(dir $(lastword $(MAKEFILE_LIST)))
-
-SRCS += $(wildcard $(libdir)string/*.c)
 
 include lib/mylib/mylib.mk

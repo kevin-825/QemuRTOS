@@ -1,6 +1,3 @@
-d := $(dir $(lastword $(MAKEFILE_LIST)))
-
-SRCS += $(wildcard $(d)*.c)
-
-#sources := device.c
-#SRCS += $(addprefix $(d), $(sources))
+obj-y += kernel/device.o
+obj-y += kernel/fatal.o
+obj-y += kernel/printk.o

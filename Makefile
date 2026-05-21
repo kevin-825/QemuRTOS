@@ -45,8 +45,8 @@ ifeq ($(filter $(NON_BUILD_TARGETS),$(MAKECMDGOALS)),)
 
     LDFLAGS = -nostdlib -nostartfiles    
     # 5. STRICT Modular Flag Injection
-    SRCS := 
-    
+    obj-y :=
+
     include arch/$(ARCH)/arch.mk
     include chip/$(CHIP_DIR)/chip.mk
     include boards/$(BOARD_DIR)/board.mk
@@ -57,11 +57,9 @@ ifeq ($(filter $(NON_BUILD_TARGETS),$(MAKECMDGOALS)),)
     include lib/lib.mk
     include mm/mm.mk
     include include/include.mk    
-    OBJS := $(SRCS:.c=.o)
-    OBJS := $(OBJS:.S=.o)
-    OBJS := $(OBJS:.s=.o)
-    OBJS := $(addprefix $(TARGET_DIR)/, $(OBJS))
-    
+    OBJS := $(addprefix $(TARGET_DIR)/, $(obj-y))
+
+
     DEPS := $(OBJS:.o=.d)
     CFLAGS += -MMD -MP
     $(info "========================================")
@@ -91,7 +89,7 @@ $(TARGET_DIR):
 $(TARGET): $(OBJS)
 	@mkdir -p $(@D)
 	@echo " [Building QemuRTOS] src files:"
-	@echo "$(SRCS)" | tr ' ' '\n' | sort | sed 's/ /\n/g' 
+	@echo "$(obj-y)" | tr ' ' '\n' | sort | sed 's/ /\n/g' 
 	@echo "\nCFLAGS: $(CFLAGS)\n "
 	@echo "LDFLAGS: $(LDFLAGS)"
 	@echo "======================================="

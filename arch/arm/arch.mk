@@ -2,13 +2,16 @@
 
 d := $(dir $(lastword $(MAKEFILE_LIST)))
 
-SRCS += $(wildcard $(d)core/*.c)
-SRCS += $(wildcard $(d)core/*.S)
-SRCS += $(wildcard $(d)core/*.s)
+mySrc :=
+mySrc += $(wildcard $(d)core/*.c)
+mySrc += $(wildcard $(d)core/*.S)
+mySrc += $(wildcard $(d)core/*.s)
+myobj :=
+myobj :=$(mySrc:.c=.o)
+myobj :=$(myobj:.S=.o)
+myobj :=$(myobj:.s=.o)
 
-SRCS += $(wildcard $(d)*.c)
-SRCS += $(wildcard $(d)*.S)
-SRCS += $(wildcard $(d)*.s)
+obj-y += $(myobj)
 
 #sources := device.c
 #SRCS += $(addprefix $(d), $(sources))
