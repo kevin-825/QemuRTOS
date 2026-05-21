@@ -1,5 +1,5 @@
-#ifndef DEVICE_H
-#define DEVICE_H
+#ifndef _KERNEL_DEVICE_H
+#define _KERNEL_DEVICE_H
 
 #include <stdint.h>
 /* include/device.h */

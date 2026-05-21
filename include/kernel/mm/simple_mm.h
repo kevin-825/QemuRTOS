@@ -56,7 +56,7 @@ struct simple_mm_block {
 // Function prototypes for simple memory management
 bool simple_init(void *base, size_t size);
 void *simple_malloc(size_t size);
-bool simple_free(void *ptr);
+void simple_free(void *ptr);
 
 void *simple_calloc(size_t num, size_t size);
 void *simple_realloc(void *ptr, size_t new_size);

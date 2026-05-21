@@ -28,9 +28,9 @@ QemuRTOS/
 │   ├── serial/              # pl011.c, ns16550.c
 │   └── interrupt_controller/# irq-gic.c, irq-plic.c
 │
-├── subsys/                  # Middleware (The Zephyr addition)
+├── subsys/                  # Middleware (The kernel addition)
 │   ├── logging/             # System-wide printk/logging logic
 │   └── memory/              # Your TLSF allocator lives here now!
 │
-├── include/                 # Public APIs (zephyr/kernel.h, zephyr/device.h)
+├── include/                 # Public APIs (kernel/kernel.h, kernel/device.h)
 └── scripts/                 # Build system plumbing (Kconfig tools)

@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "kernel/printk.h"
+#include "kernel/assert.h"
+#include "kernel/fatal.h"
 #include "kernel/mm/simple_mm.h"
 #include "string.h"
 
@@ -129,7 +131,7 @@ void *simple_malloc(size_t size)
     return alloced_ptr;
 }
 
-bool ensure_prev_block_coalescing(struct simple_mm_block *block_to_free)
+void ensure_prev_block_coalescing(struct simple_mm_block *block_to_free)
 {
     struct simple_mm_block *prev_block = NULL;
     
@@ -142,11 +144,11 @@ bool ensure_prev_block_coalescing(struct simple_mm_block *block_to_free)
     prev_block = (struct simple_mm_block *)((uint8_t *)block_to_free - prev_block_size);
     if (prev_block->magic != SIMPLE_MM_MAGIC){
         pr_err("Previous block corruption detected at %p\n", prev_block);
-        return false;
+        k_panic();
     } else if(!IS_BLOCK_FREE(prev_block->size_flag)) {
         // previos block is supposed to be free, but it's not marked as free, possible corruption
         pr_err("Previous block at %p is supposed to be free. Possible corruption.\n", prev_block);
-        return false;
+        k_panic();
     } else {
         // previos block is free, Coalesce with previous block
         size_t prev_flag = EXTRACT_FLAG(prev_block->size_flag);
@@ -158,27 +160,24 @@ bool ensure_prev_block_coalescing(struct simple_mm_block *block_to_free)
         // write the footer
         SIZE_MEMBER_TYPE *ptr_footer = (SIZE_MEMBER_TYPE *)((uint8_t *)prev_block + new_size - SIZE_MEMBER_TYPE_SIZE);
         *ptr_footer = new_size;
-        return true;
     }
 }
 
-bool simple_free(void *ptr)
+void simple_free(void *ptr)
 {
 #ifdef CONFIG_MM_DEBUG
     printk("[simple_free] Attempting to free block at %p\n", ptr);
 #endif
-    if (ptr == NULL) {
-        printk("[simple_free] Warning: Attempt to free a NULL pointer\n");
-        return false; // Cannot free a NULL pointer
-    }
+    __ASSERT(ptr != NULL, "[simple_free] Error: Attempt to free a NULL pointer");
+
     struct simple_mm_block *block_to_free = (struct simple_mm_block *)ptr - 1; // Get the block header
     if (block_to_free->magic != SIMPLE_MM_MAGIC) {
         printk("[simple_free] Error: Invalid block magic number. Possible double free or corruption at %p\n", ptr);
-        return false; // Invalid block, possible double free or corruption
+        k_panic();
     }
     if (IS_BLOCK_FREE(block_to_free->size_flag)) {
         printk("[simple_free] Warning: Block at %p is already free. Possible double free\n", ptr);
-        return false; // Block is already free, possible double free
+        k_panic();
     }
 
     block_to_free->size_flag |= FLAG_FREE; // Mark the block as free
@@ -189,7 +188,7 @@ bool simple_free(void *ptr)
     struct simple_mm_block *next_block = (struct simple_mm_block *)((uint8_t *)block_to_free + size_to_free);
     if ((next_block->magic != SIMPLE_MM_MAGIC)) {
         pr_err(" memory corruption at %p\n", ptr);
-        return false; // Next block is corrupted, possible memory corruption
+        k_panic();
     } else if (!IS_BLOCK_FREE(next_block->size_flag)) {
         // Next block is not free,
         next_block->size_flag |= FLAG_PREV_FREE; // Mark the next block's PREV_FREE flag
@@ -209,19 +208,62 @@ bool simple_free(void *ptr)
     }
 
     if (IS_PREV_BLOCK_FREE(block_to_free->size_flag)) {
-        return ensure_prev_block_coalescing(block_to_free);
+        ensure_prev_block_coalescing(block_to_free);
     }
-    return true;
 }
 
 void *simple_calloc(size_t num, size_t size)
 {
-    return NULL;
+    /* 1. Trap Integer Overflow */
+    if (num != 0 && size > (size_t)-1 / num) {
+        printk("[simple_calloc] Error: Integer overflow detected!\n");
+        return NULL;
+    }
+
+    size_t total_size = num * size;
+
+    /* 2. Allocate the memory using your engine */
+    void *ptr = simple_malloc(total_size);
+    
+    /* 3. Zero out the payload if allocation succeeded */
+    if (ptr != NULL) {
+        memset(ptr, 0, total_size);
+    }
+    return ptr;
 }
 
 void *simple_realloc(void *ptr, size_t new_size)
 {
-    return NULL;
+    if (ptr == NULL) {
+        return simple_malloc(new_size); // realloc with NULL ptr should behave like malloc
+    }
+    if(new_size == 0) {
+        simple_free(ptr); // realloc with size 0 should free the block
+        return NULL;
+    }
+
+
+    struct simple_mm_block *old_block_head = (struct simple_mm_block *)ptr - 1; // Get the block header
+
+    if (old_block_head->magic != SIMPLE_MM_MAGIC) {
+        printk("[simple_realloc] Error: Invalid block magic number. Possible corruption at %p\n", ptr);
+        return NULL; // Invalid block, possible corruption
+    }
+
+    size_t old_size = EXTRACT_SIZE(old_block_head->size_flag);
+
+    if (new_size <= old_size) {
+        // If the new size is smaller or equal, we can just return the same pointer
+        return ptr;
+    }
+    
+    void *new_ptr = simple_malloc(new_size);
+    if (new_ptr == NULL) {
+        return NULL; // Allocation failed
+    }
+    memcpy(new_ptr, ptr, old_size); // Copy old data to new block
+    simple_free(ptr); // Free the old block
+    return new_ptr;
 }
 
 

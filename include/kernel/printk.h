@@ -1,6 +1,6 @@
 /* include/kernel/printk.h */
-#ifndef PRINTK_H
-#define PRINTK_H
+#ifndef _KERNEL_PRINTK_H
+#define _KERNEL_PRINTK_H
 
 /* Initialize the console routing */
 void console_init(void);
@@ -65,4 +65,4 @@ void printk(const char *fmt, ...);
 #define pr_debug(fmt, ...) do { } while(0)
 #endif
 
-#endif
+#endif /* _KERNEL_PRINTK_H */

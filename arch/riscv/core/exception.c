@@ -1,7 +1,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
-#include "exception.h"
+#include "arch/riscv/exception.h"
 #include "riscv_cpu.h"
 #include "encoding.h"
 #include "kernel/printk.h"
@@ -152,9 +152,8 @@ void risc_v_application_exception_handler( uint32_t ulMcause )
     //context.mepc = 0;   // Replace with actual program counter
 
     //serialize_and_dump(&context);
-    while(1){
-        
-	}
+    struct arch_esf *arch_esf = (struct arch_esf *)p_exc_stac_frame;
+    
 }
 
 void risc_v_ecall_handler( uint32_t ulMcause )

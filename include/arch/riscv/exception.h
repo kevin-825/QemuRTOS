@@ -1,6 +1,10 @@
 
-#ifndef EXC_H_
-#define EXC_H_
+#ifndef _ARCH_RISCV_EXCEPTION_H
+#define _ARCH_RISCV_EXCEPTION_H
+
+#include <stdint.h>
+#include <stddef.h>
+
 
 // Define the CSR registers for RISC-V
 // Define the CSR registers for RISC-V
@@ -48,7 +52,41 @@
 #else
     #define IDX_XCRITICALNESTING   14
 #endif
-
+struct arch_esf {
+    uintptr_t mepc;
+    uintptr_t mstatus;
+    uintptr_t ra;
+    uintptr_t t0;
+    uintptr_t t1;
+    uintptr_t t2;
+    uintptr_t s0;
+    uintptr_t s1;
+    uintptr_t a0;
+    uintptr_t a1;
+    uintptr_t a2;
+    uintptr_t a3;
+    uintptr_t a4;
+    uintptr_t a5;
+#ifndef __riscv_32e
+    uintptr_t a6;
+    uintptr_t a7;
+    uintptr_t s2;
+    uintptr_t s3;
+    uintptr_t s4;
+    uintptr_t s5;
+    uintptr_t s6;
+    uintptr_t s7;
+    uintptr_t s8;
+    uintptr_t s9;
+    uintptr_t s10;
+    uintptr_t s11;
+    uintptr_t t3;
+    uintptr_t t4;
+    uintptr_t t5;
+    uintptr_t t6;
+#endif
+    uintptr_t critical_nesting;
+};
 
 /* IDX_MSTATUS already defined as 1 */
 
@@ -61,4 +99,4 @@ typedef void (*ecall_handler_t)( uint32_t, uint32_t, uint32_t, uint32_t, uint32_
 void risc_v_ecall_handler( uint32_t ulMcause );
 void register_ecall_handler(long syscall_num, ecall_handler_t handler);
 
-#endif
+#endif // _ARCH_RISCV_EXCEPTION_H

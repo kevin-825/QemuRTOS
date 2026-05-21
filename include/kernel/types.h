@@ -41,4 +41,4 @@ typedef __INTPTR_TYPE__ intptr_t;
 
 
 
-#endif
+#endif /* KERNEL_TYPES_H */

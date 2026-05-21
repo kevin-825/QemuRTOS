@@ -40,7 +40,9 @@ ifeq ($(filter $(NON_BUILD_TARGETS),$(MAKECMDGOALS)),)
     OBJCPY  = $(CROSS_COMPILE)objcopy    
     CFLAGS = -Wall -Wextra -O0 -g3 \
              -ffreestanding -nostdlib -nostartfiles \
-             -Iinclude     
+             -Iinclude -Iinclude/generated \
+             -include include/generated/autoconf.h
+
     LDFLAGS = -nostdlib -nostartfiles    
     # 5. STRICT Modular Flag Injection
     SRCS := 
@@ -79,7 +81,7 @@ endif
 # ==============================================================================
 
 
-all: $(TARGET)
+all: include/generated/autoconf.h $(TARGET)
 
 # Safer directory creation rule
 $(TARGET_DIR): 
@@ -105,13 +107,13 @@ $(TARGET): $(OBJS)
 
 
 # Build rules
-$(TARGET_DIR)/%.o: %.c | $(TARGET_DIR)
+$(TARGET_DIR)/%.o: %.c include/generated/autoconf.h | $(TARGET_DIR)
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -c $< -o $@
-$(TARGET_DIR)/%.o: %.S | $(TARGET_DIR)
+$(TARGET_DIR)/%.o: %.S include/generated/autoconf.h | $(TARGET_DIR)
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -c $< -o $@
-$(TARGET_DIR)/%.o: %.s | $(TARGET_DIR)
+$(TARGET_DIR)/%.o: %.s include/generated/autoconf.h | $(TARGET_DIR)
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -c $< -o $@
 
@@ -162,6 +164,11 @@ defconfig:
 		exit 1; \
 	fi
 	@echo " [SUCCESS] Loaded configuration from $@"
+
+# Create a target for the autoconf header using Kconfiglib
+include/generated/autoconf.h: .config
+	@mkdir -p include/generated
+	@genconfig --header-path include/generated/autoconf.h
 
 print-%:
 	@echo "$* = $($*)" | tr ' ' '\n' 
