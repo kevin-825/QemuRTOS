@@ -1,9 +1,8 @@
-#define CONFIG_BOARD_QEMU_VIRT_RV64 1
-#define CONFIG_BOARD_DIR "riscv/qemu_virt_rv64gc"
+#define CONFIG_BOARD_QEMU_VIRT_RV32 1
+#define CONFIG_BOARD_DIR "riscv/qemu_virt_rv32gc"
 #define CONFIG_DTB_DYNAMIC 1
-#define CONFIG_CHIP_QEMU_VIRT_RV64 1
-#define CONFIG_64BIT 1
-#define CONFIG_CHIP_DIR "qemu/virt_riscv64"
+#define CONFIG_CHIP_QEMU_VIRT_RV32 1
+#define CONFIG_CHIP_DIR "qemu/virt_riscv32"
 #define CONFIG_ARCH_RISCV 1
 #define CONFIG_ARCH_NAME "riscv"
 #define CONFIG_CROSS_COMPILE "riscv64-unknown-elf-"
