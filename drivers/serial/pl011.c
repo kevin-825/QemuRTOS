@@ -1,103 +1,81 @@
 /* drivers/serial/pl011.c */
 #include "kernel/device.h"
 #include "drivers/uart.h"
+#include "kernel/mm/kmalloc.h" /* Your kmalloc/kfree header */
 #include <libfdt.h>
 
 struct pl011_data {
     uintptr_t base_addr;
-    /* ARM GIC Interrupt parameters */
-    uint32_t irq_type;   /* 0 = SPI, 1 = PPI */
-    uint32_t irq_num;    /* The raw interrupt number */
-    uint32_t irq_flags;  /* Level/Edge trigger flags */
+    uint32_t irq_type;
+    uint32_t irq_num;
+    uint32_t irq_flags;
 };
 
-/* ARM PL011 Register Offsets */
-#define UART_DR    0x000 /* Data Register */
-#define UART_FR    0x018 /* Flag Register */
-#define UART_FR_TXFF (1 << 5) /* Transmit FIFO Full */
-#define UART_FR_RXFE (1 << 4) /* Receive FIFO Empty */
+#define UART_DR    0x000 
+#define UART_FR    0x018 
+#define UART_FR_TXFF (1 << 5)
+#define UART_FR_RXFE (1 << 4)
 
-static void pl011_poll_out(const struct device *dev, unsigned char c) {
-    const struct pl011_data *data = dev->data;
+static void pl011_poll_out(struct platform_device *dev, unsigned char c) {
+    struct pl011_data *data = (struct pl011_data *)dev->private_data;
     volatile uint32_t *base = (uint32_t *)data->base_addr;
     
-    if (c == '\n') {
-        pl011_poll_out(dev, '\r');
-    }
-    
+    if (c == '\n') pl011_poll_out(dev, '\r');
     while (base[UART_FR / 4] & UART_FR_TXFF);
     base[UART_DR / 4] = c;
 }
-static void pl011_put_char(const struct device *dev, unsigned char c) {
-    pl011_poll_out(dev, (unsigned char)c);
+
+static void pl011_put_char(struct platform_device *dev, unsigned char c) {
+    pl011_poll_out(dev, c);
 }
 
-static int pl011_poll_in(const struct device *dev, unsigned char *c) {
-    const struct pl011_data *data = dev->data;
-    volatile uint32_t *base = (uint32_t *)data->base_addr;
+static int pl011_probe(struct platform_device *dev) {
+    /* --- DYNAMIC RAM ALLOCATION --- */
+    struct pl011_data *data = kcalloc(1, sizeof(struct pl011_data));
+    if (!data) {
+        return -1; /* Heap allocation failed */
+    }
     
-    if ((base[UART_FR / 4] & UART_FR_RXFE) == 0) {
-        *c = base[UART_DR / 4] & 0xFF;
-        return 0;
-    }
-    return -1;
-}
-static char pl011_get_char(const struct device *dev) {
-    unsigned char c;
-    while (pl011_poll_in(dev, &c) != 0) {
-        /* Wait for data */
-    }
-    return (char)c;
-}
-
-int pl011_init(const struct device *dev, void *dtb, int dt_node) {
-    struct pl011_data *data = (struct pl011_data *)dev->data;
     int len;
     const fdt32_t *prop;
+    extern void *g_dtb_ptr; 
 
-    /* --- 1. EXTRACT THE BASE ADDRESS --- */
-    prop = fdt_getprop(dtb, dt_node, "reg", &len);
+    /* Extract Base Address */
+    prop = fdt_getprop(g_dtb_ptr, dev->dt_node_offset, "reg", &len);
     if (!prop) {
-        return -1; 
+        kfree(data); /* Clean up on failure! */
+        return -1;
     }
     
-    uint64_t addr_high = fdt32_to_cpu(prop[0]);
-    uint64_t addr_low  = fdt32_to_cpu(prop[1]);
-    data->base_addr = (uintptr_t)((addr_high << 32) | addr_low);
+    uint64_t addr = ((uint64_t)fdt32_to_cpu(prop[0]) << 32) | fdt32_to_cpu(prop[1]);
+    data->base_addr = (uintptr_t)addr;
 
-    /* --- 2. EXTRACT ALL 3 IRQ CELLS --- */
-    prop = fdt_getprop(dtb, dt_node, "interrupts", &len);
-    
-    /* Ensure the property actually contains at least 3 cells (12 bytes) */
+    /* Extract IRQs */
+    prop = fdt_getprop(g_dtb_ptr, dev->dt_node_offset, "interrupts", &len);
     if (prop && len >= (int)(3 * sizeof(fdt32_t))) {
         data->irq_type  = fdt32_to_cpu(prop[0]);
         data->irq_num   = fdt32_to_cpu(prop[1]);
         data->irq_flags = fdt32_to_cpu(prop[2]);
-    } else {
-        data->irq_type  = 0;
-        data->irq_num   = 0;
-        data->irq_flags = 0;
     }
 
-    return 0; 
+    /* Bind the dynamically allocated memory back to the device */
+    dev->private_data = data;
+    
+    return 0; /* Success! */
 }
 
-/* API Structure */
+/* Optional: Clean up memory if the device is hot-unplugged or errors out */
+static void pl011_remove(struct platform_device *dev) {
+    if (dev->private_data) {
+        kfree(dev->private_data);
+        dev->private_data = NULL;
+    }
+}
+
 static const struct uart_driver_api pl011_api = {
     .poll_out = pl011_poll_out,
-    .poll_in  = pl011_poll_in,
     .put_char = pl011_put_char,
-    .get_char = pl011_get_char
 };
 
-/* Initialize the data struct with 0s */
-static struct pl011_data uart0_data = { 
-    .base_addr = 0, 
-    .irq_type = 0, 
-    .irq_num = 0, 
-    .irq_flags = 0 
-};
-static struct device_state uart0_state = { .init_state = DEVICE_STATE_UNINIT };
-
-/* THE ZEPHYR MAGIC */
-DEVICE_DEFINE(uart0, "arm,pl011", pl011_init, NULL, &uart0_data, &uart0_state, &pl011_api, POST_KERNEL);
+/* Tell the Linker to pack this driver into the .driver_list array */
+DRIVER_DEFINE(pl011, "arm,pl011", pl011_probe, &pl011_api, POST_KERNEL);

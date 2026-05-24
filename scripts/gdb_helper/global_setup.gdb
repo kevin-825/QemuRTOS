@@ -28,3 +28,13 @@ set tui mouse-events on
 
 # Flush any stale registers from previous sessions
 maintenance flush register-cache
+
+#display /3i $pc - 4*1
+
+define print_list
+  set $curr = $arg0
+  while $curr != 0
+    print *$curr
+    set $curr = $curr->next
+  end
+end

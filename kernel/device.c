@@ -1,80 +1,91 @@
 //device.c - Core device management for QemuRTOS
 
+/* kernel/device.c */
 #include "kernel/device.h"
-#include <string.h>
-#include <stddef.h>
-#include <libfdt.h>  /* Added for Auto-Probing */
+#include "kernel/mm/kmalloc.h"  /* Your kmalloc/kfree header */
+#include "kernel/printk.h"
+#include <libfdt.h>
+#include "string.h"
 
-/* Import symbols from linker.ld */
-extern const struct device _device_PRE_KERNEL_start;
-extern const struct device _device_PRE_KERNEL_end;
-extern const struct device _device_POST_KERNEL_start;
-extern const struct device _device_POST_KERNEL_end;
-extern const struct device _device_init_start;
-extern const struct device _device_init_end;
+extern struct device_driver _driver_list_start[];
+extern struct device_driver _driver_list_end[];
 
-/* Updated to accept the DTB pointer */
-static void init_tier(const struct device *start, const struct device *end, void *dtb_ptr) {
-    for (const struct device *dev = start; dev < end; dev++) {
-        if (dev->state->init_state != DEVICE_STATE_UNINIT) {
-            continue;
+/* Global linked list head for the Platform Bus */
+static struct platform_device *platform_bus = NULL;
+
+void platform_bus_enumerate(void *dtb) {
+    int node_offset = 0;
+    int depth = 0;
+    
+    for (node_offset = fdt_next_node(dtb, -1, &depth);
+         node_offset >= 0;
+         node_offset = fdt_next_node(dtb, node_offset, &depth)) {
+        
+        const char *compat = fdt_getprop(dtb, node_offset, "compatible", NULL);
+        if (!compat) continue;
+
+        const char *status = fdt_getprop(dtb, node_offset, "status", NULL);
+        if (status && strcmp(status, "disabled") == 0) continue; 
+
+        /* --- THE HEAP ALLOCATION --- */
+        /* kcalloc is perfect here because it ensures dev->driver, dev->next, 
+         * and dev->private_data are safely initialized to NULL */
+        struct platform_device *dev = kcalloc(1, sizeof(struct platform_device));
+        if (!dev) {
+            /* Out of memory condition, stop enumerating */
+            break; 
         }
 
-        int dt_node = -1;
+        const char *node_name = fdt_get_name(dtb, node_offset, NULL);
+        strncpy(dev->name, node_name, sizeof(dev->name) - 1);
+        dev->name[sizeof(dev->name) - 1] = '\0';
+        
+        dev->compatible = compat;
+        dev->dt_node_offset = node_offset;
+        dev->state.init_state = DEVICE_STATE_UNINIT;
 
-        /* AUTO-PROBE LOGIC: If this driver is looking for specific hardware */
-        if (dev->compatible) {
-            if (!dtb_ptr) {
-                dev->state->init_state = DEVICE_STATE_ERROR;
-                continue; /* No DTB available to probe */
-            }
-
-            /* Search the DTB for the compatible string */
-            dt_node = fdt_node_offset_by_compatible(dtb_ptr, -1, dev->compatible);
-
-            if (dt_node < 0) {
-                /* Hardware not found in the DTB. 
-                 * Skip initialization entirely, leave state as UNINIT. */
-                continue; 
-            }
-        }
-
-        /* Hardware found (or it's a software-only virtual device without a compatible string) */
-        dev->state->init_state = DEVICE_STATE_INITIALIZING;
-
-        if (dev->init) {
-            /* Pass the DTB pointer and the exact node offset to the driver */
-            int err = dev->init(dev, dtb_ptr, dt_node);
-            if (err == 0) {
-                dev->state->init_state = DEVICE_STATE_READY;
-            } else {
-                dev->state->init_state = DEVICE_STATE_ERROR;
-            }
-        } else {
-            /* No init function needed, just mark ready */
-            dev->state->init_state = DEVICE_STATE_READY;
-        }
+        /* Add to the head of the global linked list */
+        dev->next = platform_bus;
+        platform_bus = dev;
     }
 }
 
-/* Boot sequence passes the DTB from start.S into here */
-void device_init_all(void *dtb_ptr) {
-    /* Optional sanity check: Ensure the DTB isn't corrupted */
-    if (dtb_ptr && fdt_check_header(dtb_ptr) != 0) {
-        dtb_ptr = NULL; /* Force fail on physical devices if DTB is bad */
-    }
+int platform_bus_match_drivers(void *dtb) {
+    struct platform_device *dev;
+    struct device_driver *drv;
+    int matched_count = 0;
 
-    init_tier(&_device_PRE_KERNEL_start, &_device_PRE_KERNEL_end, dtb_ptr);
-    init_tier(&_device_POST_KERNEL_start, &_device_POST_KERNEL_end, dtb_ptr);
+    for (dev = platform_bus; dev != NULL; dev = dev->next) {
+        if (dev->state.init_state != DEVICE_STATE_UNINIT) continue;
+
+        for (drv = _driver_list_start; drv < _driver_list_end; drv++) {
+            printk("Matching device '%s' against driver '%s'...\n", dev->name, drv->name);
+            if (fdt_node_check_compatible(dtb, dev->dt_node_offset, drv->compatible) == 0) {
+                
+                dev->driver = drv;
+                dev->state.init_state = DEVICE_STATE_INITIALIZING;
+                
+                if (drv->probe && drv->probe(dev) == 0) {
+                    dev->state.init_state = DEVICE_STATE_READY;
+                    matched_count++;
+                } else {
+                    dev->state.init_state = DEVICE_STATE_ERROR;
+                    /* If probe fails, it's the driver's responsibility to free 
+                     * dev->private_data, but the bus keeps the dev struct around 
+                     * to flag the hardware failure. */
+                }
+                break; 
+            }
+        }
+    }
+    return matched_count;
 }
 
-const struct device* device_get_binding(const char *name) {
-    for (const struct device *dev = &_device_init_start; dev < &_device_init_end; dev++) {
+struct platform_device* platform_bus_get_device(const char *name) {
+    struct platform_device *dev;
+    for (dev = platform_bus; dev != NULL; dev = dev->next) {
         if (strcmp(dev->name, name) == 0) {
-            if (dev->state->init_state == DEVICE_STATE_READY) {
-                return dev;
-            }
-            return NULL;
+            return dev;
         }
     }
     return NULL;

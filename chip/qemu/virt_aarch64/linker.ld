@@ -68,19 +68,19 @@ SECTIONS
         . = ALIGN(8);
 
         /* --- DEVICE INITIALIZATION TIERS --- */
-        PROVIDE(_device_init_start = .);
+        PROVIDE(_driver_list_start = .);
 
         /* 1. Pre-Kernel Devices (Interrupt controllers, Timers) */
-        PROVIDE(_device_PRE_KERNEL_start = .);
-        KEEP(*(._device_PRE_KERNEL))
-        PROVIDE(_device_PRE_KERNEL_end = .);
+        PROVIDE(_driver_list_PRE_KERNEL_start = .);
+        KEEP(*(._driver_list_PRE_KERNEL))
+        PROVIDE(_driver_list_PRE_KERNEL_end = .);
 
         /* 2. Post-Kernel Devices (UART, I2C, SPI) */
-        PROVIDE(_device_POST_KERNEL_start = .);
-        KEEP(*(._device_POST_KERNEL))
-        PROVIDE(_device_POST_KERNEL_end = .);
+        PROVIDE(_driver_list_POST_KERNEL_start = .);
+        KEEP(*(._driver_list_POST_KERNEL))
+        PROVIDE(_driver_list_POST_KERNEL_end = .);
 
-        PROVIDE(_device_init_end = .);
+        PROVIDE(_driver_list_end = .);
         /* ----------------------------------- */
         
         . = ALIGN(8);

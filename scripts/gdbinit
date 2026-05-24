@@ -57,8 +57,7 @@ define bkpt
     echo \n-------------------------------\n
     #thbreak _start
     thbreak main
-    break device_init_all
-    break device.c:33
+    hb risc_v_vector_table 
     echo \n-------------------------------\n
 end
 

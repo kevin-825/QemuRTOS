@@ -2,6 +2,7 @@
 #include "kernel/printk.h"
 #include "kernel/device.h"
 #include "drivers/uart.h"
+#include <libfdt.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -9,19 +10,98 @@
 
 #define NULL ((void *)0)
 
-static const struct device *console_dev;
+struct platform_device *system_console = NULL;
 
-void console_init(void) {
-    console_dev = device_get_binding("uart0");
+int console_init(void *dtb)
+{
+    int chosen_offset;
+    int len;
+    const char *stdout_path;
+
+    chosen_offset = fdt_path_offset(dtb, "/chosen");
+    if (chosen_offset < 0) {
+        return -1;
+    }
+
+    stdout_path = fdt_getprop(dtb, chosen_offset, "stdout-path", &len);
+    if (!stdout_path || len <= 0) {
+        return -1;
+    }
+
+    /* Copy to a local buffer so we can modify it safely */
+    char buf[128];
+    int copy_len = len;
+    if (copy_len >= (int)sizeof(buf))
+        copy_len = sizeof(buf) - 1;
+    memcpy(buf, stdout_path, copy_len);
+    buf[copy_len] = '\0';
+
+    /* 1) Strip optional baudrate suffix "node:115200" -> keep "node" */
+    char *colon = strchr(buf, ':');
+    if (colon) *colon = '\0';
+
+    /* 2) If it's a full path like "/soc/serial@10000000", take basename */
+    const char *node_name = buf;
+    if (node_name[0] == '/') {
+        const char *last_slash = strrchr(node_name, '/');
+        if (last_slash && last_slash[1] != '\0') {
+            node_name = last_slash + 1;
+        } else {
+            /* path ended with '/', fallback to original (unlikely) */
+            node_name = buf + 1; /* skip leading slash */
+        }
+    }
+
+    /* 3) If node_name is still empty, fail */
+    if (!node_name || node_name[0] == '\0') {
+        return -1;
+    }
+
+    /* 4) Ask platform bus for the device by node name or alias */
+    system_console = platform_bus_get_device(node_name);
+
+    /* 5) If not found, try using the original buf (maybe it was an alias) */
+    if (!system_console) {
+        /* try without stripping leading slash (some DTBs use alias names with slash) */
+        system_console = platform_bus_get_device(buf);
+    }
+
+    /* 6) Verify device exists and is ready */
+    if (!system_console || system_console->state.init_state != DEVICE_STATE_READY) {
+        system_console = NULL;
+        return -1;
+    }
+
+    return 0;
+}
+
+/* The low-level function that actually dumps characters to the active hardware */
+void console_putc(char c) {
+    /* Ensure the console is mapped and the driver API is attached */
+    if (system_console && system_console->driver && system_console->driver->api) {
+        
+        /* Cast the generic API pointer to our UART-specific API */
+        const struct uart_driver_api *api = system_console->driver->api;
+        
+        /* Fire the driver's transmit function */
+        
+        if (c == '\n') {
+            api->put_char(system_console, '\r');
+        }
+        api->put_char(system_console, (unsigned char)c);
+    }
+}
+
+/* Standard puts implementation to test the engine */
+void console_puts(const char *str) {
+    while (*str) {
+        console_putc(*str++);
+    }
 }
 
 static void print_char(char c) {
-    if (!console_dev) return; 
-    
-    if (c == '\n') {
-        uart_poll_out(console_dev, '\r');
-    }
-    uart_poll_out(console_dev, c);
+    if (!system_console) return; 
+    console_putc(c);
 }
 
 /* -------------------------------------------------------------------

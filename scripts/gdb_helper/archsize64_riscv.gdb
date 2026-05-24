@@ -123,7 +123,7 @@ define archsize64_riscv-stop-hook
     #display /i $pc
     
     # Dump S-Mode registers by default since we are debugging Linux
-    info_supervisor_reg
+    info_machine_reg
     infr
     
     echo =======================================================\n

@@ -2,8 +2,9 @@
 #ifndef _KERNEL_PRINTK_H
 #define _KERNEL_PRINTK_H
 
-/* Initialize the console routing */
-void console_init(void);
+/* The main kernel print function */
+int console_init(void *dtb);
+
 
 /* The main kernel print function */
 void printk(const char *fmt, ...);
