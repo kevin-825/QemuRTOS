@@ -1,5 +1,4 @@
-/* arch/aarch64/core/startup.S */
-
+.extern vector_table_el1
 .global _start
 .section .text.boot
 /* =======================================================
@@ -92,6 +91,16 @@ el1_entry:
     /* AArch64 requires the stack to be 16-byte aligned */
     ldr x1, =_stack_top
     mov sp, x1
+
+    /* install vector_table_el1 into vbar_el1 */
+// Load the address of the vector table into x0
+    ldr x1, =vector_table_el1
+    
+    // Write x1 into the VBAR_EL1 register
+    msr vbar_el1, x1
+
+    // Ensure the system register write is complete before continuing
+    isb
 
     /* 
      * 5. Clear the BSS section.

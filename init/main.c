@@ -5,7 +5,7 @@
 #include "kernel/mm/simple_mm.h"
 #include "test.h"
 
-extern unsigned int g_dtb_ptr;
+extern unsigned long g_dtb_ptr;
 
 extern uint8_t _heap[];
 extern uint8_t _eheap[];

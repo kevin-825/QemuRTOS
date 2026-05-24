@@ -13,5 +13,7 @@ myobj :=$(myobj:.s=.o)
 
 obj-y += $(myobj)
 
+CFLAGS += -Iarch/$(ARCH)/core
+
 #sources := device.c
 #SRCS += $(addprefix $(d), $(sources))
